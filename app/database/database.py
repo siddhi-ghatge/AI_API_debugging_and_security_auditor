@@ -5,13 +5,13 @@ from pathlib import Path
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-# Database connection URL from environment variables
+# Read database URL from Render Environment Variables
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
     "mysql+pymysql://root:@localhost/ai_api_analyzer"
 )
 
-# Project root folder (where main.py is located)
+# Project root
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 # Aiven CA certificate path
@@ -19,21 +19,20 @@ CA_FILE = Path(
     os.getenv("DB_SSL_CA", str(PROJECT_ROOT / "ca.pem"))
 )
 
-# Configure SSL for Aiven MySQL
+# Configure database connection
 connect_args = {}
 
 if "aivencloud.com" in DATABASE_URL:
     if not CA_FILE.is_file():
         raise FileNotFoundError(
             f"Aiven CA certificate not found: {CA_FILE}. "
-            "Download the CA certificate from Aiven and save it as ca.pem."
+            "Set DB_SSL_CA to the certificate's actual path."
         )
 
     connect_args["ssl"] = {
         "ca": str(CA_FILE)
     }
 
-# Create database engine
 engine = create_engine(
     DATABASE_URL,
     connect_args=connect_args,
@@ -42,14 +41,12 @@ engine = create_engine(
     future=True
 )
 
-# Database session
 SessionLocal = sessionmaker(
     bind=engine,
     autocommit=False,
     autoflush=False
 )
 
-# Base class for SQLAlchemy models
 Base = declarative_base()
 
 
